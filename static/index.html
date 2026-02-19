@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swiss Caselaw — AI-Zugang zum Schweizer Recht</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #1a2744;
+    --navy-light: #243560;
+    --gold: #b8962e;
+    --gold-light: #d4af5a;
+    --text: #1a1a2e;
+    --text-muted: #5a6070;
+    --bg: #f7f8fa;
+    --card: #ffffff;
+    --border: #e2e6ed;
+    --green: #2d7a4f;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 16px;
+  }
+
+  /* Header */
+  header {
+    background: var(--navy);
+    color: white;
+    padding: 2rem 1.5rem 2.5rem;
+    text-align: center;
+  }
+  .badge {
+    display: inline-block;
+    background: var(--gold);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.7rem;
+    border-radius: 20px;
+    margin-bottom: 1rem;
+  }
+  header h1 {
+    font-size: clamp(1.6rem, 5vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.75rem;
+  }
+  header h1 span { color: var(--gold-light); }
+  header p {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.75);
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    background: var(--navy-light);
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: wrap;
+  }
+  .stat {
+    padding: 0.75rem 1.5rem;
+    text-align: center;
+    border-right: 1px solid rgba(255,255,255,0.1);
+  }
+  .stat:last-child { border-right: none; }
+  .stat-num {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--gold-light);
+  }
+  .stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.55);
+  }
+
+  /* Main */
+  main {
+    max-width: 660px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+  }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.75rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .card h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .card h2 .icon { font-size: 1.1rem; }
+
+  /* Signup form */
+  .form-row {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+  input[type=email] {
+    flex: 1;
+    min-width: 0;
+    padding: 0.7rem 1rem;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    font-size: 0.95rem;
+    color: var(--text);
+    background: white;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input[type=email]:focus { border-color: var(--navy); }
+  .btn {
+    padding: 0.7rem 1.4rem;
+    background: var(--navy);
+    color: white;
+    border: none;
+    border-radius: 7px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: var(--navy-light); }
+  .error { color: #c0392b; font-size: 0.85rem; margin-top: 0.5rem; min-height: 1.2rem; }
+
+  /* Result */
+  #result { display: none; }
+  .key-box {
+    background: #f0f4ff;
+    border: 1px solid #c8d4f0;
+    border-radius: 7px;
+    padding: 0.9rem 1rem;
+    margin-bottom: 0.5rem;
+    position: relative;
+  }
+  .key-text {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    color: var(--navy);
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    padding-right: 3.5rem;
+    display: block;
+    line-height: 1.5;
+  }
+  .copy-btn {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    background: var(--navy);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 0.3rem 0.65rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .copy-btn:hover { background: var(--gold); }
+  .copy-btn.copied { background: var(--green); }
+  .hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem; }
+
+  /* Steps */
+  .steps { margin-top: 0.25rem; }
+  .step {
+    display: flex;
+    gap: 1rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+  .step:last-child { border-bottom: none; padding-bottom: 0; }
+  .step-num {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    background: var(--navy);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-top: 0.1rem;
+  }
+  .step-body { flex: 1; min-width: 0; }
+  .step-body strong { color: var(--navy); }
+  .step-body .sub {
+    margin-top: 0.6rem;
+  }
+
+  /* URL box (in step 2) */
+  .url-box {
+    background: #f0f4ff;
+    border: 1px solid #c8d4f0;
+    border-radius: 7px;
+    padding: 0.75rem 1rem;
+    position: relative;
+    margin-top: 0.5rem;
+  }
+  #url-display {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.75rem;
+    color: var(--navy);
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    display: block;
+    padding-right: 4rem;
+    line-height: 1.5;
+  }
+
+  /* Examples */
+  .examples { list-style: none; }
+  .examples li {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    padding-left: 1.2rem;
+    position: relative;
+  }
+  .examples li:last-child { border-bottom: none; }
+  .examples li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  /* Trust */
+  .trust {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+  .trust-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+  .trust-item .dot {
+    width: 7px;
+    height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Notice */
+  .notice {
+    background: #fffbeb;
+    border: 1px solid #f6d860;
+    border-radius: 7px;
+    padding: 0.9rem 1rem;
+    font-size: 0.82rem;
+    color: #7a6000;
+    margin-top: 1.25rem;
+    line-height: 1.5;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 2rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge">Beta · Prototype</div>
+  <h1>Swiss Caselaw<br><span>für Claude &amp; ChatGPT</span></h1>
+  <p>Durchsuche über 1 Million Schweizer Gerichtsentscheide direkt aus deinem KI-Assistenten.</p>
+</header>
+
+<div class="stats-bar">
+  <div class="stat"><span class="stat-num">1M+</span><span class="stat-label">Entscheide</span></div>
+  <div class="stat"><span class="stat-num">26</span><span class="stat-label">Kantone</span></div>
+  <div class="stat"><span class="stat-num">100+</span><span class="stat-label">Gerichte</span></div>
+  <div class="stat"><span class="stat-num">Täglich</span><span class="stat-label">Aktualisiert</span></div>
+</div>
+
+<main>
+
+  <!-- Signup -->
+  <div class="card" id="signup-form">
+    <h2><span class="icon">🔐</span> Kostenlosen Zugang anfordern</h2>
+    <div class="form-row">
+      <input type="email" id="email" placeholder="ihre@email.ch" autocomplete="email" />
+      <button class="btn" onclick="getKey()">Zugang erhalten</button>
+    </div>
+    <div class="error" id="error"></div>
+    <div class="trust">
+      <div class="trust-item"><div class="dot"></div>Keine Kreditkarte erforderlich</div>
+      <div class="trust-item"><div class="dot"></div>Daten bleiben lokal</div>
+      <div class="trust-item"><div class="dot"></div>Offizielle Quellen (bger.ch, kantonal)</div>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="card" id="result">
+    <h2><span class="icon">✅</span> Ihr persönlicher Zugangs-Link</h2>
+    <div class="key-box">
+      <span class="key-text" id="key-display"></span>
+      <button class="copy-btn" id="copy-key-btn" onclick="copyKey()">Kopieren</button>
+    </div>
+    <div class="hint">Speichern Sie diesen Link — er wird nicht erneut angezeigt.</div>
+
+    <h2 style="margin-top:1.5rem"><span class="icon">⚡</span> Einrichtung in 3 Schritten</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          Öffnen Sie <strong>Claude Desktop</strong> → Einstellungen → <strong>Konnektoren</strong> → klicken Sie auf <strong>+</strong>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          Name: <strong>Swiss Caselaw</strong> — URL: Ihren persönlichen Link einfügen
+          <div class="sub">
+            <div class="url-box">
+              <span id="url-display"></span>
+              <button class="copy-btn" id="copy-url-btn" onclick="copyUrl()">Kopieren</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          Auf <strong>Hinzufügen</strong> klicken — fertig. Swiss Caselaw erscheint sofort in Ihren Claude-Tools.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Examples -->
+  <div class="card">
+    <h2><span class="icon">💬</span> Beispielanfragen</h2>
+    <ul class="examples">
+      <li>«Suche BGer-Entscheide zur Kündigung im Mietrecht 2024»</li>
+      <li>«Was hat das Bundesverwaltungsgericht zu Eritrea-Asylgesuchen entschieden?»</li>
+      <li>«Zeig mir Entscheid 6B_123/2024 und fasse die Regeste zusammen»</li>
+      <li>«Entscheide zu Art. 8 BV aus dem Kanton Zürich»</li>
+      <li>«Wie viele Urteile gibt es vom Verwaltungsgericht Luzern?»</li>
+    </ul>
+  </div>
+
+  <!-- Sources -->
+  <div class="card">
+    <h2><span class="icon">🏛️</span> Datenquellen</h2>
+    <div class="trust" style="margin-top:0">
+      <div class="trust-item"><div class="dot"></div>Bundesgericht (BGer) — 173'000+ Entscheide</div>
+      <div class="trust-item"><div class="dot"></div>Bundesverwaltungsgericht (BVGer)</div>
+      <div class="trust-item"><div class="dot"></div>Alle 26 Kantone</div>
+      <div class="trust-item"><div class="dot"></div>Täglich aktualisiert via bger.ch</div>
+      <div class="trust-item"><div class="dot"></div>Deutsch · Französisch · Italienisch</div>
+    </div>
+  </div>
+
+  <div class="notice">
+    ⚠️ <strong>Prototyp.</strong> Dieser Server demonstriert die Verbindungsarchitektur mit Beispieldaten. Die Vollversion mit über 1 Million echten Entscheiden ist in Vorbereitung.
+  </div>
+
+  <footer>Swiss Caselaw MCP · Alle Daten aus öffentlichen Gerichtsquellen · <a href="https://opencaselaw.ch" style="color:var(--gold)">opencaselaw.ch</a></footer>
+
+</main>
+
+<script>
+let userKey = '';
+let fullUrl = '';
+let baseUrl = '';
+
+// Fetch base URL from server config
+fetch('/api/config').then(r => r.json()).then(d => { baseUrl = d.base_url; }).catch(() => { baseUrl = window.location.origin; });
+
+async function getKey() {
+  const email = document.getElementById('email').value.trim();
+  const err = document.getElementById('error');
+  if (!email || !email.includes('@')) {
+    err.textContent = 'Bitte geben Sie eine gültige E-Mail-Adresse ein.';
+    return;
+  }
+  err.textContent = '';
+  try {
+    const r = await fetch('/api/keys', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email})
+    });
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    userKey = data.key;
+    const base = baseUrl || window.location.origin;
+    fullUrl = base + '/mcp?key=' + data.key;
+    document.getElementById('key-display').textContent = data.key;
+    document.getElementById('url-display').textContent = fullUrl;
+    document.getElementById('signup-form').style.display = 'none';
+    document.getElementById('result').style.display = 'block';
+  } catch(e) {
+    err.textContent = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
+  }
+}
+
+function copyKey() {
+  navigator.clipboard.writeText(userKey);
+  const btn = document.getElementById('copy-key-btn');
+  btn.textContent = 'Kopiert ✓';
+  btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = 'Kopieren'; btn.classList.remove('copied'); }, 2000);
+}
+
+function copyUrl() {
+  navigator.clipboard.writeText(fullUrl);
+  const btn = document.getElementById('copy-url-btn');
+  btn.textContent = 'Kopiert ✓';
+  btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = 'Kopieren'; btn.classList.remove('copied'); }, 2000);
+}
+</script>
+</body>
+</html>
